@@ -12,11 +12,30 @@ const LOG_EVENT_PLAYER_HEAL = 'PLAYER_HEAL';
 const LOG_EVENT_GAME_OVER = 'GAME_OVER';
 
 
-const enteredValue = prompt("Maximum life for you and the monster?");
+// const enteredValue = prompt("Maximum life for you and the monster?");
+// let chosenMaxLife = parseInt(enteredValue);
 
-let chosenMaxLife = parseInt(enteredValue);
-if (isNaN(chosenMaxLife) || chosenMaxLife <= 0) {
+function getMaxLifeValues() {
+    const enteredValue = prompt("Maximum life for you and the monster?", "100");
+    const parsedValue = parseInt(enteredValue);
+    if (isNaN(parsedValue) || parsedValue <= 0) {
+        throw {
+            message: "Invalid user input, not a number."
+        };
+    }
+    return parsedValue;
+}
+
+let chosenMaxLife;
+
+try {
+    chosenMaxLife = getMaxLifeValues();
+} catch (error) {
+    console.log(error.message);
     chosenMaxLife = 100;
+    alert("Your input was not valid. Default value of 100 was applied.")
+} finally {
+
 }
 
 let currentMonsterHealth = chosenMaxLife;
@@ -34,22 +53,44 @@ function writeToLog(event, value, monsterHealth, playerHealth) {
         finalPlayerHealth: playerHealth
     };
 
-    if (event === LOG_EVENT_PLAYER_ATTACK) {
-        logEntry.target = 'MONSTER';
-    } else if (event === LOG_EVENT_PLAYER_STRONG_ATTACK) {
-        logEntry.target = 'MONSTER';
-    } else if (event === LOG_EVENT_MONSTER_ATTACK) {
-        logEntry.target = 'PLAYER';
-    } else if (event === LOG_EVENT_PLAYER_HEAL) {
-        logEntry.target = 'PLAYER';
-    } else if (event === LOG_EVENT_GAME_OVER) {
-        logEntry = {
-            event: event,
-            value: value,
-            finalMonsterHealth: monsterHealth,
-            finalPlayerHealth: playerHealth
-        }
+    switch (event) {
+        case LOG_EVENT_PLAYER_ATTACK:
+        case LOG_EVENT_PLAYER_STRONG_ATTACK:
+            logEntry.target = 'MONSTER';
+            break;
+        case LOG_EVENT_MONSTER_ATTACK:
+        case LOG_EVENT_PLAYER_HEAL:
+            logEntry.target = 'PLAYER';
+            break;
+        case LOG_EVENT_GAME_OVER:
+            logEntry = {
+                event: event,
+                value: value,
+                finalMonsterHealth: monsterHealth,
+                finalPlayerHealth: playerHealth
+            }
+            break;
+        default:
+            logEntry = {};
     }
+
+
+    // if (event === LOG_EVENT_PLAYER_ATTACK) {
+    //     logEntry.target = 'MONSTER';
+    // } else if (event === LOG_EVENT_PLAYER_STRONG_ATTACK) {
+    //     logEntry.target = 'MONSTER';
+    // } else if (event === LOG_EVENT_MONSTER_ATTACK) {
+    //     logEntry.target = 'PLAYER';
+    // } else if (event === LOG_EVENT_PLAYER_HEAL) {
+    //     logEntry.target = 'PLAYER';
+    // } else if (event === LOG_EVENT_GAME_OVER) {
+    //     logEntry = {
+    //         event: event,
+    //         value: value,
+    //         finalMonsterHealth: monsterHealth,
+    //         finalPlayerHealth: playerHealth
+    //     }
+    // }
     battleLog.push(logEntry);
 }
 
@@ -110,15 +151,20 @@ function endRound() {
 }
 
 function attackMonster(mode) {
-    let maxDamage;
-    let logEvent;
-    if (mode === MODE_ATTACK) {
-        maxDamage = ATTACK_VALUE;
-        logEvent = LOG_EVENT_PLAYER_ATTACK;
-    } else if (mode === MODE_STRONG_ATTACK) {
-        maxDamage = STRONG_ATTACK_VALUE;
-        logEvent = LOG_EVENT_PLAYER_STRONG_ATTACK;
-    }
+    const maxDamage = mode === MODE_ATTACK ? ATTACK_VALUE : STRONG_ATTACK_VALUE;
+    const logEvent =
+        mode === MODE_ATTACK
+            ? LOG_EVENT_PLAYER_ATTACK
+            : LOG_EVENT_PLAYER_STRONG_ATTACK;
+    // let logEvent;
+    // let maxDamage;
+    // if (mode === MODE_ATTACK) {
+    //     maxDamage = ATTACK_VALUE;
+    //     logEvent = LOG_EVENT_PLAYER_ATTACK;
+    // } else if (mode === MODE_STRONG_ATTACK) {
+    //     maxDamage = STRONG_ATTACK_VALUE;
+    //     logEvent = LOG_EVENT_PLAYER_STRONG_ATTACK;
+    // }
     const damage = dealMonsterDamage(maxDamage);
     currentMonsterHealth -= damage;
     writeToLog(
@@ -158,7 +204,22 @@ function healHandler() {
 }
 
 function printLogHandler() {
-    console.log(battleLog);
+    // for (let i = 0; i < battleLog.length ; i++){
+    //     console.log("---");
+    // }
+    let i = 0;
+    for (const entry of battleLog) {
+        console.log(`#${i}`);
+        for (const entryKey in entry) {
+            let roundedNumber;
+            if (entry.hasOwnProperty(entryKey)){
+                roundedNumber = isNaN(parseFloat(entry[entryKey])) ? entry[entryKey] : Number(entry[entryKey].toFixed(2));
+                console.log(entryKey);
+                console.log(roundedNumber);
+            }
+        }
+        i++;
+    }
 }
 
 
